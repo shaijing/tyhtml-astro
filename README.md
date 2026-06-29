@@ -2,6 +2,16 @@
 
 Astro Content Layer loader for [tyhtml](https://www.npmjs.com/package/tyhtml) — compile `.typ` files to HTML at build time.
 
+## When to use this
+
+`tyhtml-astro` is a thin wrapper. If any of the following are deal-breakers for you, see [Alternatives](#alternatives) below:
+
+- You need **SVG output** (e.g., for paged documents, math figures)
+- You want **component-level rendering** (`<Typst code={...} />` inline in `.astro` files)
+- You're on **Astro 3 or 4** (this package uses the Content Layer API introduced in Astro 5)
+
+Otherwise, this package is the simplest path: ~100 lines, native Rust engine via `@isomtop/tyhtml`, Content Layer loader.
+
 ## Installation
 
 ```bash
@@ -108,6 +118,29 @@ src/content/typ/post.typ
 set:html={post.body} renders the HTML
 post.data.title etc. exposes frontmatter
 ```
+
+## Alternatives
+
+### [`astro-typst`](https://github.com/OverflowCat/astro-typst) by OverflowCat
+
+A more feature-complete integration built on [`typst.ts`](https://github.com/Myriad-Dreamin/typst.ts) (WASM). Choose this if you need any of:
+
+- **SVG output** — vector output for paged documents, math figures, charts
+- **Component rendering** — `<Typst code={source} />` inline in `.astro` files
+- **JS ↔ Typst data passing** — pass values from Astro to typst and query typst values back as typed AST
+- **Internal cross-references** — `<Jump.astro>` snippet for in-document navigation
+- **Astro 3 / 4 compatibility** — uses the legacy `addContentEntryType` API
+
+Trade-offs vs. `tyhtml-astro`:
+
+- Ships compiled JS in `dist/` (we ship raw TS, compiled on consumer side via Vite)
+- Pulls 9 extra dependencies (we have 2 peerDeps: `@isomtop/tyhtml` + `astro`)
+- WASM startup cost (~50–200ms first compile) vs. native `.node` (<10ms)
+- No standalone `compileTypst` outside Astro (we expose it via the `@isomtop/tyhtml` peerDep — you can use it in scripts, build tools, etc.)
+
+### Direct `pandoc`
+
+If you only need one-shot `.typ` → HTML conversion (e.g., a docs build script), `pandoc 3.1.5+` has a built-in Typst reader/writer. No Astro integration needed.
 
 ## License
 
