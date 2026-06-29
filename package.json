@@ -1,0 +1,43 @@
+{
+    "name": "@isomtop/tyhtml-astro",
+    "version": "0.1.0",
+    "description": "Astro Content Layer loader that compiles Typst .typ files to HTML at build time via @isomtop/tyhtml. Each entry exposes the compiled HTML as body and the <meta> label as JSON data. Compatible with Astro 6 and 7.",
+    "type": "module",
+    "main": "./src/index.ts",
+    "types": "./src/index.ts",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/shaijing/tyhtml-astro.git"
+    },
+    "exports": {
+        ".": "./src/index.ts"
+    },
+    "files": [
+        "src",
+        "README.md",
+        "LICENSE"
+    ],
+    "scripts": {
+        "typecheck": "tsc --noEmit",
+        "test": "node --experimental-strip-types --test tests/"
+    },
+    "keywords": [
+        "astro",
+        "astro-integration",
+        "tyhtml",
+        "typst",
+        "content-layer",
+        "loader"
+    ],
+    "license": "MIT",
+    "peerDependencies": {
+        "@isomtop/tyhtml": "^0.1.0",
+        "astro": "^6.0.0 || ^7.0.0"
+    },
+    "devDependencies": {
+        "@isomtop/tyhtml": "^0.1.0",
+        "@types/node": "^22.0.0",
+        "astro": "^6.0.0 || ^7.0.0",
+        "typescript": "^5.0.0"
+    }
+}
