@@ -1,15 +1,12 @@
 import type { Loader, LoaderContext } from 'astro/loaders'
+import type { TyHtml as TyHtmlType, CompileOptions } from '@isomtop/tyhtml'
 import { readdir, stat } from 'node:fs/promises'
 import { createRequire } from 'node:module'
 import { join, relative, sep } from 'node:path'
-import * as tyhtml from '@isomtop/tyhtml'
 
 // Vite's SSR transform drops extra named exports from native addons.
 // Use createRequire to get the full native binding directly.
-const tyhtmlNative: {
-    compileTypst: typeof tyhtml.compileTypst
-    compileTypstSync: (input: string, options?: unknown) => ReturnType<typeof tyhtml.compileTypst> extends Promise<infer R> ? R : never
-} = createRequire(import.meta.url)('@isomtop/tyhtml')
+const tyhtmlModule: { TyHtml: typeof TyHtmlType } = createRequire(import.meta.url)('@isomtop/tyhtml')
 
 export interface TypstLoaderOptions {
     base?: string
@@ -62,14 +59,25 @@ async function pathExists(p: string): Promise<boolean> {
  * Astro Content Layer loader for Typst files.
  *
  * In dev mode, the watch handler compiles on change/add/unlink and writes
- * to the store synchronously (using the NAPI sync variant). Content updates
- * are visible immediately; Vite's occasional `astro:server-app.js` error
- * during full reload is cosmetic and does not affect correctness.
+ * to the store synchronously (using the TyHtml sync variant). Content
+ * updates are visible immediately; Vite's occasional `astro:server-app.js`
+ * error during full reload is cosmetic and does not affect correctness.
+ *
+ * The `TyHtml` engine is constructed once per loader instance — the
+ * constructor is the explicit cold start (Library + system font
+ * discovery). Every `compile` / `compileSync` call after that reuses the
+ * cached state, so the per-file cost is dominated by `typst::compile`
+ * itself.
  */
 export function typstLoader(options: TypstLoaderOptions = {}): Loader {
     const base = options.base ?? './'
     const compile = options.compile ?? { pretty: true, bodyOnly: true }
     const silent = options.silent ?? false
+
+    // Single engine instance shared across the initial load and every
+    // subsequent watch-event compile. The constructor pays the cold-start
+    // cost exactly once per loader.
+    const engine = new tyhtmlModule.TyHtml()
 
     return {
         name: 'typst',
@@ -87,7 +95,7 @@ export function typstLoader(options: TypstLoaderOptions = {}): Loader {
                 const relPath = relative(absBase, absPath)
                 const id = computeId(absBase, absPath)
                 try {
-                    const result = await tyhtml.compileTypst(absPath, compile)
+                    const result = await engine.compile(absPath, compile as CompileOptions)
                     const rawData = result.metadata
                         ? (JSON.parse(result.metadata) as Record<string, unknown>)
                         : {}
@@ -128,7 +136,7 @@ export function typstLoader(options: TypstLoaderOptions = {}): Loader {
                 const relPath = relative(absBase, changedPath)
                 const id = computeId(absBase, changedPath)
                 try {
-                    const result = tyhtmlNative.compileTypstSync(changedPath, compile)
+                    const result = engine.compileSync(changedPath, compile as CompileOptions)
                     const rawData = result.metadata
                         ? (JSON.parse(result.metadata) as Record<string, unknown>)
                         : {}

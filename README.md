@@ -106,7 +106,7 @@ Body content here.
 ```
 src/content/typ/post.typ
        ↓ (recursively found)
-       ↓ (each file → tyhtml.compileTypst on a worker thread)
+       ↓ (each file → TyHtml.compile on a worker thread)
        ↓
 ┌──────────────────────────────────────┐
 │  Astro Content Layer entry          │
@@ -118,6 +118,8 @@ src/content/typ/post.typ
 set:html={post.body} renders the HTML
 post.data.title etc. exposes frontmatter
 ```
+
+The loader constructs a single `new TyHtml()` engine per loader instance. The constructor is the explicit cold start (Library build + system-font discovery), so every file compile after that reuses the cached state — per-file work is dominated by `typst::compile` itself.
 
 ## Alternatives
 
@@ -136,7 +138,7 @@ Trade-offs vs. `tyhtml-astro`:
 - Ships compiled JS in `dist/` (we ship raw TS, compiled on consumer side via Vite)
 - Pulls 9 extra dependencies (we have 2 peerDeps: `@isomtop/tyhtml` + `astro`)
 - WASM startup cost (~50–200ms first compile) vs. native `.node` (<10ms)
-- No standalone `compileTypst` outside Astro (we expose it via the `@isomtop/tyhtml` peerDep — you can use it in scripts, build tools, etc.)
+- No standalone `TyHtml` instance outside Astro (we expose it via the `@isomtop/tyhtml` peerDep — you can use `new TyHtml()` in scripts, build tools, etc.)
 
 ### Direct `pandoc`
 
