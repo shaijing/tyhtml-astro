@@ -30,6 +30,9 @@
         "loader"
     ],
     "license": "MIT",
+    "publishConfig": {
+        "access": "public"
+    },
     "peerDependencies": {
         "@isomtop/tyhtml": "^0.1.0",
         "astro": "^6.0.0 || ^7.0.0"
