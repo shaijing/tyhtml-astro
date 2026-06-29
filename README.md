@@ -95,19 +95,28 @@ Body content here.
 | Field | Type | Default | Description |
 |---|---|---|---|
 | `base` | `string` | `'./'` | Directory to scan, relative to project root. |
+| `engine.fontPaths` | `string[]` | `[]` | Font directories scanned **once** at engine construction and merged with system fonts. Prefer this over `compile.fontPaths` for dirs that don't change per file. |
 | `compile.pretty` | `boolean` | `true` | Pretty-print HTML output. |
 | `compile.bodyOnly` | `boolean` | `true` | Strip `<!DOCTYPE>`/`<html>`/`<body>` wrapper. Set `false` to get full HTML. |
 | `compile.noMetadata` | `boolean` | `false` | Skip `<meta>` query (faster). |
 | `compile.metadataLabel` | `string` | `'meta'` | Label to query for metadata. |
-| `compile.fontPaths` | `string[]` | `[]` | Additional font directories for typst. |
+| `compile.fontPaths` | `string[]` | `[]` | Per-call font directories. Layered on top of `engine.fontPaths` for each compile. |
 
 ## How it works
+
+The loader builds a single `new TyHtml(options)` engine per loader instance. The constructor is the explicit cold start: it scans `engine.fontPaths` once and merges them with the system font set, then caches the resulting Typst `Library` + font entries for the lifetime of the loader.
 
 ```
 src/content/typ/post.typ
        ↓ (recursively found)
-       ↓ (each file → TyHtml.compile on a worker thread)
        ↓
+   ┌─────────────────────────────────────┐
+   │  TyHtml engine (one per loader)     │
+   │  cold start: system fonts +         │
+   │  engine.fontPaths scan              │
+   └─────────────────────────────────────┘
+       ↓ initial load: engine.compile (worker thread)
+       ↓ dev watch event: engine.compileSync (inline)
 ┌──────────────────────────────────────┐
 │  Astro Content Layer entry          │
 │  id:    "post"                      │
@@ -119,7 +128,7 @@ set:html={post.body} renders the HTML
 post.data.title etc. exposes frontmatter
 ```
 
-The loader constructs a single `new TyHtml()` engine per loader instance. The constructor is the explicit cold start (Library build + system-font discovery), so every file compile after that reuses the cached state — per-file work is dominated by `typst::compile` itself.
+`compile` runs the blocking work on a worker thread (used during the initial `load`), and `compileSync` runs inline (used by the dev-mode watch handler, where Vite needs the result before the next module evaluation). Per-call work is dominated by `typst::compile` itself — the engine state built at construction time is reused.
 
 ## Alternatives
 

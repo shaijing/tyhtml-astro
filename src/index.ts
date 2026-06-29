@@ -1,5 +1,5 @@
 import type { Loader, LoaderContext } from 'astro/loaders'
-import type { TyHtml as TyHtmlType, CompileOptions } from '@isomtop/tyhtml'
+import type { TyHtml as TyHtmlType, CompileOptions, TyHtmlOptions } from '@isomtop/tyhtml'
 import { readdir, stat } from 'node:fs/promises'
 import { createRequire } from 'node:module'
 import { join, relative, sep } from 'node:path'
@@ -10,11 +10,22 @@ const tyhtmlModule: { TyHtml: typeof TyHtmlType } = createRequire(import.meta.ur
 
 export interface TypstLoaderOptions {
     base?: string
+    /**
+     * Engine-level options passed to `new TyHtml()` at loader construction.
+     * These are scanned exactly once (cold start) and merged with the
+     * system font set on the engine instance.
+     */
+    engine?: TyHtmlOptions
     compile?: {
         pretty?: boolean
         bodyOnly?: boolean
         noMetadata?: boolean
         metadataLabel?: string
+        /**
+         * Per-call font directories. Layered on top of `engine.fontPaths`
+         * for each individual compile. Prefer `engine.fontPaths` for
+         * directories that don't change between files.
+         */
         fontPaths?: string[]
     }
     silent?: boolean
@@ -71,13 +82,16 @@ async function pathExists(p: string): Promise<boolean> {
  */
 export function typstLoader(options: TypstLoaderOptions = {}): Loader {
     const base = options.base ?? './'
+    const engineOptions = options.engine ?? {}
     const compile = options.compile ?? { pretty: true, bodyOnly: true }
     const silent = options.silent ?? false
 
     // Single engine instance shared across the initial load and every
     // subsequent watch-event compile. The constructor pays the cold-start
-    // cost exactly once per loader.
-    const engine = new tyhtmlModule.TyHtml()
+    // cost exactly once per loader (system-font discovery + scan of any
+    // `engine.fontPaths`); every subsequent `compile` / `compileSync` only
+    // clones the cached font entries and runs `typst::compile`.
+    const engine = new tyhtmlModule.TyHtml(engineOptions)
 
     return {
         name: 'typst',
