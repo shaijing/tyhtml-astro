@@ -38,7 +38,7 @@ test('computeId handles top-level files', () => {
     assert.equal(id, 'hello')
 })
 
-test('computeId produces forward slashes even on Windows', () => {
+test('computeId produces forward slashes even on Windows', { skip: process.platform !== 'win32' }, () => {
     const winPath = `C:\\Users\\test\\posts\\intro.typ`
     const winBase = `C:\\Users\\test`
     const id = computeId(winBase, winPath)
