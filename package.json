@@ -1,6 +1,6 @@
 {
     "name": "@isomtop/tyhtml-astro",
-    "version": "0.1.0",
+    "version": "0.1.1",
     "description": "Astro Content Layer loader that compiles Typst .typ files to HTML at build time via @isomtop/tyhtml. Each entry exposes the compiled HTML as body and the <meta> label as JSON data. Compatible with Astro 6 and 7.",
     "type": "module",
     "main": "./src/index.ts",
