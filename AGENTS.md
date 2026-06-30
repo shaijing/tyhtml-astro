@@ -16,7 +16,7 @@ Astro Content Layer loader for `.typ` (Typst) files. One source file, ~190 lines
 ## Commands
 
 ```bash
-npm test                  # node --experimental-strip-types --test tests/
+bun test                  # run tests
 npx tsc --noEmit          # typecheck (tsc not in repo, use the local binary)
 ```
 

@@ -19,7 +19,7 @@
     ],
     "scripts": {
         "typecheck": "tsc --noEmit",
-        "test": "node --experimental-strip-types --test tests/"
+        "test": "bun test"
     },
     "keywords": [
         "astro",
@@ -34,11 +34,11 @@
         "access": "public"
     },
     "peerDependencies": {
-        "@isomtop/tyhtml": "^0.1.0",
+        "@isomtop/tyhtml": "^0.1.2",
         "astro": "^6.0.0 || ^7.0.0"
     },
     "devDependencies": {
-        "@isomtop/tyhtml": "^0.1.0",
+        "@isomtop/tyhtml": "^0.1.2",
         "@types/node": "^22.0.0",
         "astro": "^6.0.0 || ^7.0.0",
         "typescript": "^5.0.0"
